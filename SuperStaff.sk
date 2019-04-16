@@ -1,0 +1,268 @@
+# #! 
+# #! Superstaff - iMPDevMC (iDevMC - Beta 1.0) 
+# #! 
+
+variables:
+	{superstaff.%player%} = "staff" # <-- SOON!
+	{ss.staff.%player%} = "true"
+
+options:
+	prefix: &9&lSS &8»
+	prefix2: &8[&9&lSS&8]
+	prefix3: &8[&9&lSS&8] &8>
+	prefix4: &8»
+
+	raw-prefix: SS »
+	raw-prefix2: [SS]
+	raw-prefix3: [SS] >
+	raw-prefix4: »
+
+	permission: blazedsky.superstaff
+	permission-message: &cYou are not allowed to use &9&lSuperStaff !
+
+	ss.clock: &9&lSS &8» &7Random TP &8(&f&lRight &7Click&8)
+	ss.nametag: &9&lSS &8» &7Inventory &8(&f&lRight &7Click&8)
+	ss.book: &9&lSS &8» &7Player's Information &8(&f&lRight &7Click&8)
+	ss.slimeball: &9&lSS &8» &7Vanish &8(&f&lRight &7Click&8)
+	ss.feather: &9&lSS &8» &7Fly &8(&f&lRight &7Click&8)
+	ss.ice: &9&lSS &8» &7Freeze &8(&f&lRight &7Click&8)
+	ss.nether_star: &9&lSS &8» &7Account Compromised &8(&f&lRight &7Click&8)
+
+# #! EVENTS 
+
+on join:
+	if {vanish.%player%} is not set:
+		set {vanish.%player%} to false
+	if {vanish.%player%} is true:
+		hide player from all players
+		message "{@prefix} &7You are still on vanish"
+		stop
+	else:
+		stop
+
+on drop:
+	if {ss.drops.%player%} is "true":
+		cancel event 
+		send "{@prefix} &7You can't do that!" 
+    
+# #! LEFT/RIGHT CLICK EVENTS
+
+on right click on player with nametag:
+	if player has permission "ss.nametag":
+		if tool's name is "{@ss.nametag}":
+			send "{@prefix} &7Opening &e%clicked entity%&7's inventory" to sender
+			make player execute command "/openinv %clicked entity%"
+
+on right click on player with book:
+	if player has permission "ss.book":
+		if tool's name is "{@ss.book}":
+			make player execute command "/ps %clicked entity%"
+
+on right click:
+	if player has permission "ss.slimeball":
+		if tool's name is "{@ss.slimeball}":
+			make player execute command "/v"
+
+on right click with feather: 
+	if player has permission "ss.feather":
+		if tool's name is "{@ss.feather}":
+			make player execute "/fly"
+
+on right click with clock:
+	if name of player's tool is "{@ss.clock}":
+		loop all players:
+			add loop-player to {joueur.tp::*}
+		set {player.tp.%player%} to a random element out of {joueur.tp::*}
+		teleport player to {player.tp.%player%}
+		delete {joueur.tp::*}
+		send "{@prefix} &7Tped to &c%{player.tp.%player%}%"
+
+on right click on player with ice:
+	if player has permission "ss.ice":
+		if tool's name is "{@ss.ice}":
+			make player execute "/freeze %clicked entity%"
+
+on right click on player with nether star:
+	if player has permission "ss.nether_star":
+		if tool's name is "{@ss.nether_star}":
+			make player execute "/compromised %clicked entity%"
+
+
+#on flight toggle:
+#	player's gamemode is adventure:
+#		cancel event
+#		wait a tick
+#		set player's flight state to false
+#		push player upwards at speed 0.3
+# 		push player forwards at speed 0.9
+
+#on jump:
+#	player's gamemode is adventure:
+#		{ss.doublejump.%player%} is "true":
+#			block below player is not water or lava:
+#				set player's flight state to true
+
+# #! SS COMMANDS
+
+command /openinv <player>:
+	permission: ss.openinv
+	trigger:
+		wait 1 tick
+		set {target.%player%} to arg 1
+		open chest with 5 rows named "&cInventory > %arg 1%" to player
+		set {_playerinv} to arg 1
+		set {_slot} to 0
+		loop 36 times:
+			set {verif.%arg 1%.%{_slot}%} to slot {_slot} of arg 1's inventory
+			add 1 to {_slot}
+		set {_slot} to 0
+		set {_slotmenu} to 9
+		wait 1 tick
+		loop 36 times:
+			format slot {_slotmenu} of player with {verif.%arg 1%.%{_slot}%} to close
+			add 1 to {_slot}
+			add 1 to {_slotmenu}
+		set {armorview.helmet.%arg 1%} to arg 1's helmet
+		set {armorview.chestplate.%arg 1%} to arg 1's chestplate
+		set {armorview.leggings.%arg 1%} to arg 1's leggings
+		set {armorview.boots.%arg 1%} to arg 1's boots
+		format slot 0 of player with {armorview.helmet.%arg 1%} to close
+		format slot 1 of player with {armorview.chestplate.%arg 1%} to close
+		format slot 2 of player with {armorview.leggings.%arg 1%} to close
+		format slot 3 of player with {armorview.boots.%arg 1%} to close
+
+command /vanish:
+	aliases: v, van
+	permission: vanish.use
+	trigger:
+		if {vanish.%player%} is false:
+			set {vanish.%player%} to true
+			hide player from all players
+			message "{@prefix} &7You are now vanished"
+			stop
+		if {vanish.%player%} is true:
+			set {vanish.%player%} to false
+			reveal player from all players
+			message "{@prefix} &7You are no longer vanished"
+			stop
+		if {vanish.%player%} is not set:
+			set {vanish.%player%} to true 
+			hide player from all players
+			message "{@prefix} &7You are now vanished"
+			stop 
+
+command /fly [<text>]:
+	permission: ss.feather
+	trigger:
+		if player's flight mode is true:
+			set player's flight mode to false
+			send "{@prefix} &7Fly &cdisable"
+			stop
+		if player's flight mode is false:
+			set player's flight mode to true
+			send "{@prefix} &7Fly &aenabled"
+			stop 
+
+command /compromised [<offline player>]:
+	permission: ss.nether_star
+	trigger:
+		if arg 1 is not set:
+			send "{@prefix} &7nah, nah, nah. A &cplayer &7is required !"
+		if arg 1 is set:
+			if arg 1 is "iMPDevMC":
+				send "{@prefix} &7This player is immune to &cCompromised Accounts"
+
+		if arg 1 is set:
+			make the player execute "/ban %arg 1% Account Compromised. Appeal on discord."
+
+		if arg 1 is set:
+			if arg 1 is not online:
+				send "{@prefix} &7I wonder how do you know he/she got compromised. Use &c/ban &7please "
+# #! SS EVENTS
+
+
+command /superstaff [<text>]:
+	aliases: ss, sstaff, supers
+	permission: {@permission}
+	permission message: {@permission-message}
+	trigger:
+		if {superstaff::%player%} isn't set:
+			set {superstaff::%player%} to true
+			play sound "block.anvil.place" at the player
+			set the player's gamemode to adventure
+			set player's flight mode to true 
+			set {ss.doublejump.%player%} to "true"
+			send "{@prefix} &7SuperStaff Mode &aenabled"
+			loop integers from 0 to 35:
+				add 1 to {index}
+				set {superstaff::%player%::%{index}%} to slot loop-value of player
+				set slot loop-value of player to air
+			set {helmet::%player%} to player's helmet
+			set {chestplate::%player%} to player's chestplate
+			set {leggings::%player%} to player's leggings
+			set {boots::%player%} to player's boots
+			set {offhand::%player%} to slot 40 of player's inventory
+			set slot 40 of player's inventory to air
+			set player's helmet to air
+			set player's chestplate to air
+			set player's leggings to air
+			set player's boots to air
+			wait 1 tick
+
+			set slot 0 of player's inventory to clock named "{@ss.clock}"
+			set slot 1 of player's inventory to nametag named "{@ss.nametag}" 
+			set slot 2 of player's inventory to ice named "{@ss.ice}"
+
+			set slot 4 of player's inventory to book named "{@ss.book}" 
+
+			set slot 6 of player's inventory to nether star named "{@ss.nether_star}"
+			set slot 7 of player's inventory to slimeball named "{@ss.slimeball}" 
+			set slot 8 of player's inventory to feather named "{@ss.feather}" 
+
+			send player title "&9&lSuperStaff" with subtitle "&7Staff mode &aEnabled" 
+			set {ss.drops.%player%} to "true"
+            
+		else:
+			delete {superstaff::%player%}
+			play sound "block.anvil.place" at the player
+			set the player's gamemode to survival
+			send "{@prefix} &7SuperStaff Mode &cdisabled"
+			set {ss.drops.%player%} to "false"
+			send player title "&9&lSuperStaff" with subtitle "&7Staff mode &cDisable" 
+			set {_slot} to 0
+			loop {superstaff::%player%::*}:
+				set slot {_slot} of player's inventory to loop-value
+				add 1 to {_slot}
+				set slot 40 of player's inventory to {offhand::%player%}
+				set player's helmet to {helmet::%player%}
+				set player's chestplate to {chestplate::%player%}
+				set player's leggings to {leggings::%player%}
+			set player's boots to {boots::%player%}
+			delete {superstaff::%player%::*}
+			set {ss.drops.%player%} to "false"
+			stop
+
+command /ssupgrade [<offline player>] [<text>]:
+	permission: {@permission}
+	permission message: {@permission-message}
+	trigger:
+		if arg 1 is not set:
+			send "{@prefix} &7Argument 1,2 & 3 missing"
+		if arg 1 is set:
+			if arg 2 is not set:
+				send "{@prefix} &7Argument 2 missing"
+
+		if arg 1 is set:
+			if arg 2 is "mod":
+				send "{@prefix4} &e%arg 1%&7's &9&lSS &7rank has been updated to &8'&e&lMOD&8'"
+				set {superstaff.%arg 1%} to "mod"
+
+		if arg 1 is set:
+			if arg 2 is "admin":
+				send "{@prefix4} &e%arg 1%&7's &9&lSS &7rank has been updated to &8'&c&lADMIN&8'"
+				set {superstaff.%arg 1%} to "admin"
+
+		if arg 1 is set:
+			if arg 2 is "staff":
+				send "{@prefix} &e%arg 1%&7's &9&lSS &7rank has been updated to &8'&7&lSTAFF&8'"
+				set {superstaff.%arg 1%} to "staff"
